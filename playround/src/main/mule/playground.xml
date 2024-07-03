@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="testFlow" doc:id="59d6efc7-7b67-467f-be2e-f58158d655e8" >
+		<http:listener doc:name="Listener" doc:id="04ecf94a-ee93-470e-8647-69c5256bf281" config-ref="HTTP_Listener_config" path="/init-test"/>
+		<set-payload value='#[{&#10;	"message": "Test Successful"&#10;}]' doc:name="Set Payload" doc:id="598c8cd8-abc4-4fc3-9ec3-2183f955be18" />
+		<ee:transform doc:name="Transform Message" doc:id="43cd9c04-fa2d-4c7d-8f3b-1715463b7f83" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
