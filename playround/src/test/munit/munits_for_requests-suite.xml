@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="munits_for_requests-suite.xml" />
+	<munit:test name="munits_for_requestsFlow-test" doc:id="92b7ba00-2b6f-4faa-a211-575c7ba78a88" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="bdde31ea-d986-4e53-b5f1-8f415c2e91aa" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Request" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="c90f3054-8979-4c64-869c-373813211fe8" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"message": "success"&#10;}]' mediaType="application/json" encoding="UTF-8" />
+					<munit-tools:attributes value="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	statusCode: 200&#10;}]" mediaType="application/json" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<set-variable value="#[output application/json --- readUrl('classpath://munitsforrequestsFlowtest\xml_mock_payload.dwl')]" doc:name="Set Variable" doc:id="702a305a-6f6e-4c7d-9b6d-2c10f624f483" variableName="payloadIn"/>
+			<set-payload value="#[output application/xml --- oDataCreate: vars.payloadIn.oDataCreate]" doc:name="Set Payload" doc:id="b12a6e94-2d00-48bc-9e95-2e61a48ad1b0" />
+			<munit:set-event doc:name="Set Input" doc:id="8a808f81-ccba-40ef-9bf7-d281b4ca189d" >
+				<munit:payload encoding="UTF-8" />
+				<munit:attributes value="#[readUrl('classpath://munitsforrequestsFlowtest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to munits_for_requestsFlow" doc:id="ddf984da-d740-4ab3-b24d-e5f5875b7997" name="munits_for_requestsFlow"/>
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="7680ed2c-11b0-4720-bb66-8117b290f12d" actual="#[attributes.statusCode]" expected="#[200 as Number]" message='"Unexpected status code"'/>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

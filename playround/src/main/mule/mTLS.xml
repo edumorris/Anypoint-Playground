@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	<http:listener-config name="HTTP_Listener_config1" doc:name="HTTP Listener config" doc:id="58fc1981-7dbb-4aaa-8989-804afaf010b1" >
+		<http:listener-connection host="0.0.0.0" port="8082" protocol="HTTPS">
+			<tls:context >
+				<tls:trust-store path="certificates/server-truststore.jks" password="password" type="jks" />
+				<tls:key-store type="jks" path="certificates/server-keystore.jks" alias="mule-server" keyPassword="password" password="password" />
+			</tls:context>
+		</http:listener-connection>
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="51513673-be2b-4cb6-a868-4d1ac429e8ea" >
+		<http:request-connection host="localhost" port="8082" protocol="HTTPS">
+			<tls:context >
+				<tls:trust-store path="certificates/client-truststore.jks" password="password" type="jks" />
+				<tls:key-store type="jks" path="certificates/client-keystore.jks" alias="mule-client" keyPassword="password" password="password" />
+			</tls:context>
+		</http:request-connection>
+	</http:request-config>
+	<flow name="serverFlow" doc:id="d27e715b-606e-4309-b5dd-e59db44f7c24" >
+		<http:listener doc:name="Listener" doc:id="c4aa9877-2603-4f73-81a7-889a0532eaa0" config-ref="HTTP_Listener_config1" path="/test-server"/>
+		<set-payload value='#["mTLS successful"]' doc:name="Set Payload" doc:id="fc58d5c9-bf1d-4327-9080-b31369e033f1" />
+	</flow>
+	<flow name="mTLSFlow" doc:id="359ee1eb-4c22-4369-bedd-e9f9cc1d3209" >
+		<http:listener doc:name="Listener" doc:id="942c2fd3-dbe7-4047-914d-c70889dd0dec" config-ref="HTTP_Listener_config" path="/test-client"/>
+		<http:request method="GET" doc:name="Request" doc:id="8ca6dec9-9c23-445e-8f44-be73406b24d8" config-ref="HTTP_Request_configuration1" path="/test-server"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d4ab0a67-a5e0-494b-9476-1d35d439bbe2" >
+				<set-payload value="#[attributes.error]" doc:name="Set Payload" doc:id="8e99712c-6e61-4990-af4b-5d8967356ecc" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:request-config name="Mockaroo_HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="14112c91-90db-4d0b-9066-bb14319e58bd" >
+		<http:request-connection protocol="HTTPS" host="my.api.mockaroo.com" />
+	</http:request-config>
+	<flow name="munits_for_requestsFlow" doc:id="6c7d7a3a-4469-4bab-be61-715132333c76" >
+		<http:listener doc:name="Listener" doc:id="b648bbd0-62b4-43e8-be8f-e482c680da56" config-ref="HTTP_Listener_config" path="/mockaroo/users"/>
+		<http:request method="GET" doc:name="Request" doc:id="c90f3054-8979-4c64-869c-373813211fe8" config-ref="Mockaroo_HTTP_Request_configuration" path="/data/mockers.json">
+			<http:headers ><![CDATA[#[attributes.headers]]]></http:headers>
+			<http:query-params ><![CDATA[#[attributes.queryParams]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="9442f82d-b8a6-4573-9045-4b292881bb15" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="munits_for_requestsFlow1" doc:id="c121b53b-b062-4cab-b40f-61dc228f44f8" >
+		<http:listener doc:name="Listener" doc:id="aeb439cc-8c45-4eb3-96da-40ab9f582ad1" config-ref="HTTP_Listener_config" path="check-payload"/>
+		<set-payload value="#[readUrl('classpath://payloads/sample_response.dwl')]" doc:name="Set Payload" doc:id="17f34207-5ed3-4778-b81e-81d0fc1e5798" />
+		<ee:transform doc:name="Transform Message" doc:id="c1c60df8-e435-46a6-81a3-1e01ab1ec90e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
