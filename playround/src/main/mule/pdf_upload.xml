@@ -8,20 +8,66 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd">
 	<flow name="pdf_uploadFlow" doc:id="6c5e9c4a-b351-43e9-99de-ea0d08dbc31a" >
 		<http:listener doc:name="Listener" doc:id="391e22c3-412a-4188-8d90-e9cab80a69cb" config-ref="HTTP_Listener_config" path="/upload-pdf" outputMimeType="multipart/form-data" allowedMethods="POST"/>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="6f208d66-f69a-457f-93bd-c0a0619ced69" variableName="payloadIn"/>
 		<ee:transform doc:name="Transform Message" doc:id="581e3cd1-cfe1-4e0d-9f8d-f63deacdb005" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
+
+var files = payload."parts" 
+    filterObject ((value, key, index) -> (key as String) == "file")
+    pluck ((v, k, idx) -> {(k): v})
+
+output application/json
 ---
-payload.parts...content]]></ee:set-payload>
+files]]></ee:set-payload>
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="fileName" ><![CDATA[%dw 2.0
+				<ee:set-variable variableName="files" ><![CDATA[%dw 2.0
 output application/java
 ---
-payload.parts..filename]]></ee:set-variable>
+[payload.parts..content]]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<sftp:write doc:name="Write" doc:id="0141c858-ff7f-49c2-ba44-f5113624ca48" config-ref="SFTP_Config" path="#[vars.fileName]"/>
+		<choice doc:name="Choice" doc:id="ea70b44e-151d-4cd8-beb5-3291eb77fa64" >
+			<when expression="#[sizeOf(payload) &gt; 1]">
+				<foreach doc:name="For Each" doc:id="2214bf9e-2ef3-4a9c-bdb8-ab8ebe8b9e44" collection="payload">
+					<ee:transform doc:name="Transform Message" doc:id="3581f5ba-0104-4327-a7c4-46aa7e52f67f">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="fileName"><![CDATA[%dw 2.0
+output application/json
+---
+payload..filename[0]]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<flow-ref doc:name="SFTP Upload" doc:id="97b82995-e9fa-4d3f-8996-f6a0fb4bf5f8" name="upload_to_sftpSub_Flow" />
+				</foreach>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="8e579183-8a70-4b7b-95f7-fac22f6e3991">
+					<ee:message>
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="fileName" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.payloadIn.parts..filename[0]]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="SFTP Upload" doc:id="bca77c0c-7f2f-4594-b35b-8d21bccfa426" name="upload_to_sftpSub_Flow"/>
+			</otherwise>
+		</choice>
 	</flow>
+	<sub-flow name="upload_to_sftpSub_Flow" doc:id="f5db7a12-ba42-414f-886a-da094f1374e5" >
+		<sftp:write doc:name="Write" doc:id="0141c858-ff7f-49c2-ba44-f5113624ca48" config-ref="SFTP_Config" path="#[vars.fileName]" />
+	</sub-flow>
 </mule>
